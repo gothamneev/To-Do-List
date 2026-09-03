@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Productivity Hub</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f1f5f9;
+    }
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+    }
+    .app-container {
+      max-width: 520px;
+      margin: 0 auto;
+      background: var(--card);
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    .app-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 24px;
+      text-align: center;
+    }
+    .app-header h2 {
+      margin: 0 0 4px 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .app-header .date-sub {
+      opacity: 0.85;
+      font-size: 13px;
+    }
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+    }
+    .stat-pill {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      padding: 10px 18px;
+      border-radius: 12px;
+      text-align: center;
+      min-width: 80px;
+    }
+    .stat-pill .value {
+      font-size: 20px;
+      font-weight: 700;
+      display: block;
+    }
+    .stat-pill .label {
+      font-size: 11px;
+      opacity: 0.85;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .content { padding: 20px; }
+
+    /* Progress Button */
+    .progress-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+      border: 2px dashed #c7d2fe;
+      border-radius: 14px;
+      color: var(--primary);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      transition: all 0.25s;
+    }
+    .progress-btn:hover {
+      background: linear-gradient(135deg, #e0e7ff 0%, #d1d9ff 100%);
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(99,102,241,0.15);
+    }
+    .progress-btn:active { transform: scale(0.98); }
+    .progress-btn .icon { font-size: 20px; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.open { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal-card {
+      background: var(--card);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px 0;
+    }
+    .modal-header h3 {
+      margin: 0;
+      font-size: 17px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      border: none;
+      background: var(--bg);
+      color: var(--text-light);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .close-btn:hover {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+    .modal-body { padding: 16px 24px 24px; }
+
+    /* Calendar */
+    .calendar-card {
+      background: var(--bg);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .calendar-header h4 {
+      margin: 0;
+      font-size: 15px;
+      color: var(--text);
+    }
+    .cal-nav { display: flex; gap: 8px; }
+    .cal-nav button {
+      background: white;
+      border: 1px solid var(--border);
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text);
+      transition: all 0.2s;
+    }
+    .cal-nav button:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+    .cal-day-name {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-light);
+      font-weight: 600;
+      padding: 4px;
+    }
+    .cal-day {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s;
+      border: 2px solid transparent;
+      background: white;
+    }
+    .cal-day:hover { transform: scale(1.08); }
+    .cal-day.today { border-color: var(--primary); }
+    .cal-day .day-num { z-index: 1; line-height: 1; }
+    .cal-day .day-pct {
+      font-size: 9px;
+      color: var(--text-light);
+      margin-top: 2px;
+      z-index: 1;
+    }
+    .cal-day.empty {
+      background: transparent;
+      cursor: default;
+      pointer-events: none;
+    }
+    .cal-day.empty:hover { transform: none; }
+    .day-tooltip {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text);
+      color: white;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 10;
+    }
+    .cal-day:hover .day-tooltip { opacity: 1; }
+    .legend {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--text-light);
+    }
+    .legend-item { display: flex; align-items: center; gap: 4px; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 4px; }
+
+    /* Tasks */
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .todo-input-wrapper {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .todo-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: var(--bg);
+    }
+    .todo-input:focus { border-color: var(--primary); }
+    .add-btn {
+      padding: 12px 22px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .add-btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    .add-btn:active { transform: scale(0.96); }
+    .filter-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .filter-tab {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: none;
+      background: var(--bg);
+      color: var(--text-light);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    .filter-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+    .todo-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 6px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+      border-radius: 10px;
+      animation: slideIn 0.3s ease;
+    }
+    .todo-item:hover { background: #f8faff; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .checkbox {
+      width: 22px;
+      height: 22px;
+      border: 2px solid #c4c4d4;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .checkbox:hover { border-color: var(--primary); }
+    .checkbox.checked {
+      background: var(--success);
+      border-color: var(--success);
+    }
+    .checkbox.checked::after {
+      content: "✓";
+      color: white;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .todo-text {
+      flex: 1;
+      font-size: 15px;
+      color: var(--text);
+      transition: all 0.2s;
+      word-break: break-word;
+    }
+    .todo-text.completed {
+      text-decoration: line-through;
+      color: var(--text-light);
+    }
+    .points-badge {
+      font-size: 11px;
+      background: #fef3c7;
+      color: #92400e;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .delete-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      color: #cbd5e1;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .delete-btn:hover {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+    .empty-state {
+      text-align: center;
+      padding: 36px 20px;
+      color: #cbd5e1;
+    }
+    .stats-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-light);
+    }
+    .clear-completed {
+      background: none;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      transition: background 0.2s;
+      font-weight: 500;
+    }
+    .clear-completed:hover { background: #eef2ff; }
+    .clear-completed:disabled {
+      color: #cbd5e1;
+      cursor: default;
+      background: none;
+    }
+    .streak-flame { animation: flicker 2s infinite; }
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="app-header">
+      <h2>🎯 Productivity Hub</h2>
+      <div class="date-sub" id="dateDisplay">Loading...</div>
+      <div class="stats-row">
+        <div class="stat-pill">
+          <span class="value" id="pointsDisplay">0</span>
+          <span class="label">Points</span>
+        </div>
+        <div class="stat-pill">
+          <span class="value streak-flame" id="streakDisplay">0 🔥</span>
+          <span class="label">Day Streak</span>
+        </div>
+        <div class="stat-pill">
+          <span class="value" id="todayPctDisplay">0%</span>
+          <span class="label">Today Done</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <button class="progress-btn" id="openCalendarBtn">
+        <span class="icon">📊</span>
+        <span>Check your monthly progress</span>
+      </button>
+
+      <div class="section-title">✅ Today's Tasks</div>
+      <div class="todo-input-wrapper">
+        <input type="text" class="todo-input" id="todoInput" placeholder="Add a new task..." />
+        <button class="add-btn" id="addBtn">Add</button>
+      </div>
+
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="active">Active</button>
+        <button class="filter-tab" data-filter="completed">Completed</button>
+      </div>
+
+      <ul class="todo-list" id="todoList"></ul>
+
+      <div class="stats-bar">
+        <span id="itemsLeft">0 items left</span>
+        <button class="clear-completed" id="clearCompleted" disabled>Clear completed</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar Modal -->
+  <div class="modal-overlay" id="calendarModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>📅 Check your monthly progress</h3>
+        <button class="close-btn" id="closeCalendarBtn">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="calendar-card">
+          <div class="calendar-header">
+            <h4 id="calMonthYear">Month Year</h4>
+            <div class="cal-nav">
+              <button id="prevMonth">‹</button>
+              <button id="nextMonth">›</button>
+            </div>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <div class="legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#f1f5f9"></span> 0%</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#dcfce7"></span> 25%</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#86efac"></span> 75%</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#22c55e"></span> 100%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const today = new Date();
+      const todayKey = formatDateKey(today);
+      let currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      let nextId = 10;
+      const history = generateDemoHistory();
+      let todos = [
+        { id: 1, text: "Morning workout", completed: false },
+        { id: 2, text: "Reply to emails", completed: true },
+        { id: 3, text: "Read 10 pages", completed: false },
+        { id: 4, text: "Drink 2L water", completed: true }
+      ];
+      let currentFilter = 'all';
+      let points = history[todayKey] ? history[todayKey].points : 0;
+
+      function formatDateKey(d) {
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      }
+
+      function generateDemoHistory() {
+        const h = {};
+        for (let i = 1; i <= 30; i++) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - i);
+          const key = formatDateKey(d);
+          const total = Math.floor(Math.random() * 5) + 2;
+          const done = Math.floor(Math.random() * (total + 1));
+          const pct = Math.round((done / total) * 100);
+          h[key] = { total, done, pct, points: done * 10 + (pct === 100 ? 20 : 0) };
+        }
+        for (let i = 1; i <= 5; i++) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - i);
+          const key = formatDateKey(d);
+          h[key].done = Math.max(1, h[key].done);
+          h[key].pct = Math.round((h[key].done / h[key].total) * 100);
+        }
+        return h;
+      }
+
+      function getStreak() {
+        let streak = 0;
+        const d = new Date(today);
+        d.setDate(d.getDate() - 1);
+        while (true) {
+          const key = formatDateKey(d);
+          if (history[key] && history[key].done > 0) {
+            streak++;
+            d.setDate(d.getDate() - 1);
+          } else break;
+        }
+        const doneToday = todos.filter(t => t.completed).length;
+        if (doneToday > 0) streak++;
+        return streak;
+      }
+
+      function getHeatColor(pct) {
+        if (pct === 0) return '#f1f5f9';
+        if (pct <= 25) return '#dcfce7';
+        if (pct <= 50) return '#bbf7d0';
+        if (pct <= 75) return '#86efac';
+        if (pct < 100) return '#4ade80';
+        return '#22c55e';
+      }
+
+      function getTextColor(pct) {
+        return pct >= 75 ? 'white' : '#334155';
+      }
+
+      // Calendar Modal
+      const modal = document.getElementById('calendarModal');
+      document.getElementById('openCalendarBtn').addEventListener('click', () => {
+        renderCalendar();
+        modal.classList.add('open');
+      });
+      document.getElementById('closeCalendarBtn').addEventListener('click', () => {
+        modal.classList.remove('open');
+      });
+      modal.addEventListener('click', e => {
+        if (e.target === modal) modal.classList.remove('open');
+      });
+
+      function renderCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        const monthYear = document.getElementById('calMonthYear');
+        grid.innerHTML = '';
+
+        const year = currentMonth.getFullYear();
+        const month = currentMonth.getMonth();
+        monthYear.textContent = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+        const dayNames = ['S','M','T','W','T','F','S'];
+        dayNames.forEach(name => {
+          const el = document.createElement('div');
+          el.className = 'cal-day-name';
+          el.textContent = name;
+          grid.appendChild(el);
+        });
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) {
+          const el = document.createElement('div');
+          el.className = 'cal-day empty';
+          grid.appendChild(el);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const d = new Date(year, month, day);
+          const key = formatDateKey(d);
+          const isToday = key === todayKey;
+          const data = history[key] || { total: 0, done: 0, pct: 0 };
+          let pct = data.pct, total = data.total, done = data.done;
+          if (isToday) {
+            total = todos.length;
+            done = todos.filter(t => t.completed).length;
+            pct = total > 0 ? Math.round((done / total) * 100) : 0;
+          }
+
+          const el = document.createElement('div');
+          el.className = 'cal-day' + (isToday ? ' today' : '');
+          el.style.background = getHeatColor(pct);
+          el.style.color = getTextColor(pct);
+
+          const tooltip = document.createElement('div');
+          tooltip.className = 'day-tooltip';
+          tooltip.textContent = total > 0 ? `${done}/${total} tasks (${pct}%)` : 'No tasks';
+
+          const num = document.createElement('span');
+          num.className = 'day-num';
+          num.textContent = day;
+
+          const pctLabel = document.createElement('span');
+          pctLabel.className = 'day-pct';
+          pctLabel.textContent = total > 0 ? pct + '%' : '';
+          pctLabel.style.color = getTextColor(pct);
+          pctLabel.style.opacity = '0.7';
+
+          el.appendChild(tooltip);
+          el.appendChild(num);
+          el.appendChild(pctLabel);
+          grid.appendChild(el);
+        }
+      }
+
+      document.getElementById('prevMonth').addEventListener('click', () => {
+        currentMonth.setMonth(currentMonth.getMonth() - 1);
+        renderCalendar();
+      });
+      document.getElementById('nextMonth').addEventListener('click', () => {
+        currentMonth.setMonth(currentMonth.getMonth() + 1);
+        renderCalendar();
+      });
+
+      // Tasks
+      function renderTasks() {
+        const list = document.getElementById('todoList');
+        list.innerHTML = '';
+        const filtered = todos.filter(t => {
+          if (currentFilter === 'active') return !t.completed;
+          if (currentFilter === 'completed') return t.completed;
+          return true;
+        });
+
+        if (filtered.length === 0) {
+          li
